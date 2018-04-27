@@ -18,7 +18,7 @@ install:
   - set openssl_url=https://github.com/michael-herwig/ci-openssl/releases/download/%openssl_version%/OpenSSL-%openssl_version%-msvc15-%configuration%-%platform%.zip
   - appveyor DownloadFile "%openssl_url%" -FileName openssl.zip
   - 7z e openssl.zip -oC:\Temp\OpenSSL -aoa
-  - set OpenSSL_DIR=C:\Temp\OpenSSL
+  - set OPENSSL_ROOT_DIR=C:\Temp\OpenSSL
 
 before_build:
   - git submodule update --init --recursive
