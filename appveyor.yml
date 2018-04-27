@@ -18,6 +18,7 @@ install:
   - set openssl_url=https://github.com/michael-herwig/ci-openssl/releases/download/%openssl_version%/OpenSSL-%openssl_version%-msvc15-%configuration%-%platform%.zip
   - appveyor DownloadFile "%openssl_url%" -FileName openssl.zip
   - 7z e openssl.zip -oC:\Temp\OpenSSL -aoa
+  
   - set OPENSSL_ROOT_DIR=C:\Temp\OpenSSL
 
 before_build:
@@ -43,7 +44,7 @@ build_script:
   - set BUILD_CPR_TESTS=OFF
   - set CURL_STATIC_LIB=OFF
   - set CURL_STATIC_CRT=OFF
-  - cmake -G "%cmake_generator%" "-DCMAKE_BUILD_TYPE=%configuration%" -DCMAKE_INSTALL_PREFIX=C:\Temp\cpr ..
+  - cmake -G "%cmake_generator%" -DCMAKE_INCLUDE_PATH=C:\Temp\OpenSSL "-DCMAKE_BUILD_TYPE=%configuration%" -DCMAKE_INSTALL_PREFIX=C:\Temp\cpr ..
 
   # Build & Install
   - cmake --build . --config "%configuration%" --target install
