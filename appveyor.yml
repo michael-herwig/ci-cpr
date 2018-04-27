@@ -1,0 +1,68 @@
+image:
+  - Visual Studio 2017
+
+configuration:
+  - Debug
+#  - Release
+
+platform:
+  - x64
+#  - x86
+
+environment:
+  matrix:
+    - openssl_version: 1.1.0
+
+install:
+  # Install ci-openssl
+  - set openssl_url=https://github.com/michael-herwig/ci-openssl/releases/download/%openssl_version%/OpenSSL-%openssl_version%-msvc15-%configuration%-%platform%.zip
+  - appveyor DownloadFile "%openssl_url%" -FileName openssl.zip
+  - 7z e openssl.zip -oC:\Temp\OpenSSL
+  - set OpenSSL_DIR=C:\Temp\OpenSSL
+
+before_build:
+  - git submodule update --init --recursive
+  - cd cpr
+
+  - set /P version=<version
+  - echo "Building Version %version%"
+
+build_script:
+  # Configure Build Environment
+  - if "%platform%" == "x86" call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars32.bat"
+  - if "%platform%" == "x64" call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat"
+
+  # Configure Cmake-Generator
+  - if "%platform%" == "x86" set cmake_generator=Visual Studio 15 2017
+  - if "%platform%" == "x64" set cmake_generator=Visual Studio 15 2017 Win64
+
+  # Project Configuration
+  - mkdir build
+  - cd build
+  - set ENABLE_INET_PTON=OFF
+  - set BUILD_CPR_TESTS=OFF
+  - set CURL_STATIC_LIB=OFF
+  - set CURL_STATIC_CRT=OFF
+  - cmake -G "%cmake_generator%" "-DCMAKE_BUILD_TYPE=%configuration%" -DCMAKE_INSTALL_PREFIX=C:\Temp\cpr ..
+
+  # Build & Install
+  - cmake --build . --config "%configuration%" --target install
+
+  # Create Artifact
+  - set build_tag=msvc15-%configuration%-%platform%
+  - set artifact_name=cpr-%version%-%build_tag%.zip
+  - 7z a "%artifact_name%" C:\Temp\cpr\*
+
+after_build:
+  - appveyor PushArtifact "%artifact_name%"
+
+deploy:
+  release: $(version) [OpenSSL v$(openssl_version)]
+  tag: $(version)
+  force_update: true
+  description: 'AppVeyor CD'
+  provider: GitHub
+  auth_token:
+    secure: aWupJYJFNmN8GhkiNHaV412MnmQuedA9npndju27MejT80u1ERbwRvIt4qptWyDn
+  artifact: $(artifact_name)
+
